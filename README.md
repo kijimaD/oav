@@ -1,6 +1,5 @@
 # oav
 
-Go template repository.
+Portable OpenAPI validation tool.
 
-`git grep -l 'oav' | xargs sed -i 's/oav/your_repo/g'`
-`git grep -l 'kijimaD' | xargs sed -i 's/kijimaD/your_name/g'`
+original code: https://zenn.dev/podhmo/scraps/5dbfa70654f9f0

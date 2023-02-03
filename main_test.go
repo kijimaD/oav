@@ -1,9 +1,13 @@
 package main
 
-import(
+import (
+	"log"
 	"testing"
 )
 
-func TestMain(t *testing.T) {
-	main()
+func TestOA(t *testing.T) {
+	log.SetFlags(0)
+	if err := run(); err != nil {
+		log.Fatalf("!! %+v", err)
+	}
 }
