@@ -16,6 +16,8 @@ info:
     email: norimaking777@gmail.com
 
 servers:
+  - url: http://localhost:8080
+    description: go server
   - url: http://localhost:6969
     description: mock(Prism)
 

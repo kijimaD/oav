@@ -25,19 +25,24 @@ import (
 var spec []byte
 
 type Res struct {
-	Pets []Pet `json: pets`
+	Pets []Pet `json:"pets"`
 }
 
 type Pet struct {
-	ID int `json:id`
+	ID int `json:"id"`
 }
 
 func main() {
+	http.HandleFunc("/", root)
 	http.HandleFunc("/pets", pets)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func root(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "root")
 }
 
 func pets(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +56,7 @@ func pets(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
-
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(resp)
 }
 
