@@ -3,7 +3,7 @@
 
 DOCKER_TAG := latest
 build: ## Build image for deploy
-	docker build -t kijimad/go_skel:${DOCKER_TAG} \
+	docker build -t kijimad/oav:${DOCKER_TAG} \
 	--target deploy ./
 
 build-local: ## Build image for local development
