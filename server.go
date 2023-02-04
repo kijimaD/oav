@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -15,16 +14,12 @@ type Pet struct {
 	ID int `json:"id"`
 }
 
-func exec(ch chan bool) {
-	http.HandleFunc("/", root)
-	http.HandleFunc("/pets", pets)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-		panic(err)
-	}
+func routes() (mux *http.ServeMux) {
+	mux = http.NewServeMux()
+	mux.HandleFunc("/", root)
+	mux.HandleFunc("/pets", pets)
 
-	ch <- true
+	return
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
