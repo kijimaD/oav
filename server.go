@@ -38,5 +38,8 @@ func pets(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(resp)
+	err := json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		panic(err)
+	}
 }

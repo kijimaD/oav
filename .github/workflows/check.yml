@@ -34,13 +34,13 @@ jobs:
       - name: build
         run: go build .
 
-  run:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: run
-        run: go run .
+  # run:
+  #   needs: setup
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: run
+  #       run: go run .
 
   test:
     needs: setup

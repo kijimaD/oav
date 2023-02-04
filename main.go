@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -24,21 +23,22 @@ import (
 //go:embed openapi.yml
 var spec []byte
 
-func handle() {
+func main() {
 	log.SetFlags(0)
-	if err := run(); err != nil {
+	if err := run("/pets"); err != nil {
 		log.Fatalf("!! %+v", err)
 	}
 }
 
-func run() error {
+func run(path string) error {
 	ctx := context.Background()
 
 	doc, err := openapi3.NewLoader().LoadFromData(spec)
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
 	}
-	if doc.Validate(ctx); err != nil {
+	err = doc.Validate(ctx)
+	if err != nil {
 		return fmt.Errorf("validate doc: %w", err)
 	}
 
@@ -47,7 +47,7 @@ func run() error {
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = testPath("/pets", router, ctx)
+	err = testPath(path, router, ctx)
 	if err != nil {
 		return err
 	}
@@ -103,16 +103,22 @@ func doRequest(ctx context.Context, router routers.Router, req *http.Request) er
 	func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 
-		resp, _ := http.Get(fmt.Sprintf("%s", req.URL.String()))
+		resp, errGet := http.Get(req.URL.String())
+		if errGet != nil {
+			panic(err)
+		}
 		defer resp.Body.Close()
-		byteArray, _ := ioutil.ReadAll(resp.Body)
+		byteArray, _ := io.ReadAll(resp.Body)
 
 		var jsonBody map[string]interface{}
 		err = json.Unmarshal(byteArray, &jsonBody)
 		if err != nil {
 			panic(err)
 		}
-		json.NewEncoder(w).Encode(jsonBody)
+		err := json.NewEncoder(w).Encode(jsonBody)
+		if err != nil {
+			panic(err)
+		}
 	}(rec, req)
 
 	res := rec.Result()
