@@ -24,42 +24,6 @@ import (
 //go:embed openapi.yml
 var spec []byte
 
-type Res struct {
-	Pets []Pet `json:"pets"`
-}
-
-type Pet struct {
-	ID int `json:"id"`
-}
-
-func main() {
-	http.HandleFunc("/", root)
-	http.HandleFunc("/pets", pets)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-}
-
-func root(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "root")
-}
-
-func pets(w http.ResponseWriter, r *http.Request) {
-	resp := Res{
-		Pets: []Pet{
-			{
-				ID: 1,
-			},
-			{
-				ID: 2,
-			},
-		},
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(resp)
-}
-
 func handle() {
 	log.SetFlags(0)
 	if err := run(); err != nil {
