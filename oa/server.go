@@ -1,4 +1,4 @@
-package main
+package oa
 
 import (
 	"encoding/json"
