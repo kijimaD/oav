@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,7 +37,7 @@ func TestServer(t *testing.T) {
 	}
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemefile))
+	cli := New(&buffer, strings.NewReader(schemafile))
 	err = cli.Run("/pets")
 
 	got := buffer.String()
@@ -55,12 +54,11 @@ func TestServer(t *testing.T) {
 
 func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemefile))
-	doc, err := openapi3.NewLoader().LoadFromData(spec)
+	cli := New(&buffer, strings.NewReader(schemafile))
+	err := cli.dumpRoutes()
 	if err != nil {
-		t.Fatal("Failed")
+		t.Fatal(err)
 	}
-	cli.dumpRoutes(doc)
 
 	got := buffer.String()
 	assert.Contains(t, got, "/pets")
@@ -68,7 +66,7 @@ func TestDumpRoutes(t *testing.T) {
 	assert.Contains(t, got, "list_pets")
 }
 
-const schemefile = `---
+const schemafile = `---
 openapi: "3.1.0"
 
 info:

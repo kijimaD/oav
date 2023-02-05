@@ -36,13 +36,12 @@ func New(out io.Writer, schema io.Reader) *CLI {
 	}
 }
 
-//go:embed openapi.yml
-var spec []byte
-
 func (cli *CLI) Run(path string) error {
 	ctx := context.Background()
 
-	doc, err := openapi3.NewLoader().LoadFromData(spec)
+	buf := new(bytes.Buffer)
+	io.Copy(buf, cli.Schema)
+	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
 	}
@@ -157,7 +156,15 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 	return nil
 }
 
-func (cli *CLI) dumpRoutes(doc *openapi3.T) {
+func (cli *CLI) dumpRoutes() error {
+	buf := new(bytes.Buffer)
+	io.Copy(buf, cli.Schema) // Reader -> []byte
+
+	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("load doc: %w", err)
+	}
+
 	expectType := reflect.TypeOf(&openapi3.Operation{})
 	for k, path := range doc.Paths {
 		rv := reflect.ValueOf(path).Elem()
@@ -175,4 +182,6 @@ func (cli *CLI) dumpRoutes(doc *openapi3.T) {
 			fmt.Fprintf(cli.Out, "%-10s\t%-10s\t%s\n", k, rf.Name, op.OperationID)
 		}
 	}
+
+	return nil
 }
