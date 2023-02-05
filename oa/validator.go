@@ -40,7 +40,10 @@ func (cli *CLI) Run(path string) error {
 	ctx := context.Background()
 
 	buf := new(bytes.Buffer)
-	io.Copy(buf, cli.Schema)
+	_, errc := io.Copy(buf, cli.Schema)
+	if errc != nil {
+		return fmt.Errorf("%w", errc)
+	}
 	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
@@ -99,13 +102,13 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 	if err != nil {
 		log.Printf("[ERROR] dump request: %+v", err)
 	}
-	fmt.Fprintf(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
+	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		log.Printf("validate request is failed: %T", err)
 		return fmt.Errorf("validate request: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "request is ok")
+	fmt.Fprint(cli.Out, "request is ok")
 
 	rec := httptest.NewRecorder()
 	func(w http.ResponseWriter, req *http.Request) {
@@ -138,7 +141,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 		log.Printf("[ERROR] dump request: %+v", err)
 		return err
 	}
-	fmt.Fprintf(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
+	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	res.Body = io.NopCloser(buf)
 	resInput := &openapi3filter.ResponseValidationInput{
@@ -158,7 +161,10 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 
 func (cli *CLI) dumpRoutes() error {
 	buf := new(bytes.Buffer)
-	io.Copy(buf, cli.Schema) // Reader -> []byte
+	_, errc := io.Copy(buf, cli.Schema) // Reader -> []byte
+	if errc != nil {
+		return fmt.Errorf("%w", errc)
+	}
 
 	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
 	if err != nil {
