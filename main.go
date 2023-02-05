@@ -10,8 +10,12 @@ import (
 func main() {
 	log.SetFlags(0)
 
-	c := oa.New(os.Stdout)
-	err := c.Run("/pets")
+	file, err := os.Open("openapi.yml")
+	if err != nil {
+		panic(err)
+	}
+	c := oa.New(os.Stdout, file)
+	err = c.Run("/pets")
 
 	if err != nil {
 		log.Fatalf("!! %+v", err)

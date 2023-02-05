@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -37,7 +38,7 @@ func TestServer(t *testing.T) {
 	}
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer)
+	cli := New(&buffer, strings.NewReader(schemefile))
 	err = cli.Run("/pets")
 
 	got := buffer.String()
@@ -54,7 +55,7 @@ func TestServer(t *testing.T) {
 
 func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
-	cli := New(&buffer)
+	cli := New(&buffer, strings.NewReader(schemefile))
 	doc, err := openapi3.NewLoader().LoadFromData(spec)
 	if err != nil {
 		t.Fatal("Failed")
@@ -66,3 +67,102 @@ func TestDumpRoutes(t *testing.T) {
 	assert.Contains(t, got, "Get")
 	assert.Contains(t, got, "list_pets")
 }
+
+const schemefile = `---
+openapi: "3.1.0"
+
+info:
+  description: |
+    ## develop
+    hello world
+      - list
+        - A
+        - B
+
+  version: 1.0.0
+  title: API Docs
+  contact:
+    name: kijimad
+    email: norimaking777@gmail.com
+
+servers:
+  - url: http://localhost:8080
+    description: go server
+  - url: http://localhost:6969
+    description: mock(Prism)
+
+tags:
+  - name: Pet
+    description: |
+      pet
+
+paths:
+  /pets:
+    get:
+      summary: list pets
+      description: list pets
+      operationId: list_pets
+      tags:
+        - Pet
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                required:
+                  - pets
+                properties:
+                  pets:
+                    $ref: "#/components/schemas/Pets"
+              examples:
+                case1:
+                  $ref: "#/components/examples/PetsResponse"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Pets:
+      type: array
+      description: list pets
+      items:
+        properties:
+          id:
+            type: integer
+            description: pet ID
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  examples:
+    PetsResponse:
+      description: pets
+      value:
+        pets:
+          - id: 1
+            name: dog
+          - id: 2
+            name: cat
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: data count
+      required: false
+      schema:
+        type: integer
+        format: int32
+`

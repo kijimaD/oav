@@ -21,16 +21,18 @@ import (
 )
 
 type CLI struct {
-	Out io.Writer
+	Out    io.Writer
+	Schema io.Reader
 }
 
 type Runner interface {
 	Run() error
 }
 
-func New(out io.Writer) *CLI {
+func New(out io.Writer, schema io.Reader) *CLI {
 	return &CLI{
-		Out: out,
+		Out:    out,
+		Schema: schema,
 	}
 }
 
