@@ -65,7 +65,7 @@ func (cli *CLI) Run(path string) error {
 func (cli *CLI) testPath(path string, router routers.Router, ctx context.Context) error {
 	baseURL := "http://localhost:8080"
 
-	log.Printf("%s ----------------------------------------", path)
+	fmt.Fprintf(cli.Out, "%s ----------------------------------------\n", path)
 	req, err := http.NewRequest("GET", baseURL+path, strings.NewReader(`{}`))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
@@ -83,7 +83,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 	if err != nil {
 		return fmt.Errorf("find route: %w", err)
 	}
-	log.Println("find route is ok")
+	fmt.Fprintf(cli.Out, "find route is ok")
 
 	reqInput := &openapi3filter.RequestValidationInput{
 		Request:     req,

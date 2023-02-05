@@ -1,14 +1,15 @@
 package oa
 
 import (
+	"bytes"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/assert"
 )
 
 const basePath = "localhost:8080"
@@ -35,10 +36,16 @@ func TestServer(t *testing.T) {
 		t.Fatal("status:", resp.StatusCode)
 	}
 
-	log.SetFlags(0)
-	cli := New(os.Stdout)
-
+	buffer := bytes.Buffer{}
+	cli := New(&buffer)
 	err = cli.Run("/pets")
+
+	got := buffer.String()
+
+	assert.Contains(t, got, "GET")
+	assert.Contains(t, got, "request is ok")
+	assert.Contains(t, got, `{"pets":[{"id":1},{"id":2}]}`)
+	assert.Contains(t, got, "request is ok")
 
 	if err != nil {
 		log.Fatalf("!! %+v", err)
@@ -46,12 +53,16 @@ func TestServer(t *testing.T) {
 }
 
 func TestDumpRoutes(t *testing.T) {
-	log.SetFlags(0)
-	oav := New(os.Stdout)
-
+	buffer := bytes.Buffer{}
+	cli := New(&buffer)
 	doc, err := openapi3.NewLoader().LoadFromData(spec)
 	if err != nil {
 		t.Fatal("Failed")
 	}
-	oav.dumpRoutes(doc)
+	cli.dumpRoutes(doc)
+
+	got := buffer.String()
+	assert.Contains(t, got, "/pets")
+	assert.Contains(t, got, "Get")
+	assert.Contains(t, got, "list_pets")
 }
