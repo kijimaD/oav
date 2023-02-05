@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -35,15 +36,22 @@ func TestServer(t *testing.T) {
 	}
 
 	log.SetFlags(0)
-	if err := Run("/pets"); err != nil {
+	cli := New(os.Stdout)
+
+	err = cli.Run("/pets")
+
+	if err != nil {
 		log.Fatalf("!! %+v", err)
 	}
 }
 
 func TestDumpRoutes(t *testing.T) {
+	log.SetFlags(0)
+	oav := New(os.Stdout)
+
 	doc, err := openapi3.NewLoader().LoadFromData(spec)
 	if err != nil {
 		t.Fatal("Failed")
 	}
-	dumpRoutes(doc)
+	oav.dumpRoutes(doc)
 }
