@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -77,7 +76,7 @@ func (cli *CLI) testPath(ctx context.Context, path string, router routers.Router
 		return fmt.Errorf("new request: %w", err)
 	}
 	if err := cli.doRequest(ctx, router, req); err != nil {
-		log.Println(strings.ReplaceAll(err.Error(), "\n", "\n\t"))
+		fmt.Fprintf(cli.Out, strings.ReplaceAll(err.Error(), "\n", "\n\t"))
 	}
 
 	return nil
@@ -87,6 +86,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 	req.Header.Set("Content-Type", "application/json")
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
+		fmt.Fprintf(cli.Out, "find route: %s", err)
 		return fmt.Errorf("find route: %w", err)
 	}
 	fmt.Fprintf(cli.Out, "find route is ok")
@@ -102,12 +102,12 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 
 	b, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		log.Printf("[ERROR] dump request: %+v", err)
+		fmt.Fprintf(cli.Out, "[ERROR] dump request: %+v", err)
 	}
 	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
-		log.Printf("validate request is failed: %T", err)
+		fmt.Fprintf(cli.Out, "validate request is failed: %T", err)
 		return fmt.Errorf("validate request: %w", err)
 	}
 	fmt.Fprint(cli.Out, "request is ok")
@@ -140,7 +140,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 
 	b, err = httputil.DumpResponse(res, true)
 	if err != nil {
-		log.Printf("[ERROR] dump request: %+v", err)
+		fmt.Fprintf(cli.Out, "[ERROR] dump request: %+v", err)
 		return err
 	}
 	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
@@ -154,7 +154,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 		Options:                nil, // ?
 	}
 	if err := openapi3filter.ValidateResponse(ctx, resInput); err != nil {
-		log.Printf("valicate response is failed: %T", err)
+		fmt.Fprintf(cli.Out, "valicate response is failed: %T", err)
 		return fmt.Errorf("validate response: %w", err)
 	}
 	fmt.Fprintf(cli.Out, "response is ok\n")

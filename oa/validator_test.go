@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"net"
-	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -15,8 +14,9 @@ import (
 
 const basePath = "http://localhost:8089"
 
-func TestServer(t *testing.T) {
-	// need to fix server address
+func testServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
 	url, _ := url.Parse(basePath)
 	l, err := net.Listen("tcp", url.Host)
 	if err != nil {
@@ -26,32 +26,47 @@ func TestServer(t *testing.T) {
 	ts.Listener.Close()
 	ts.Listener = l
 	ts.Start()
+	return ts
+}
+
+func TestValidate(t *testing.T) {
+	ts := testServer(t)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		t.Fatal("status:", resp.StatusCode)
-	}
+	// need to fix server address
+	url, _ := url.Parse(basePath)
 
 	buffer := bytes.Buffer{}
 	cli := New(&buffer, strings.NewReader(schemafile), *url)
-	err = cli.Run("/pets")
+	err := cli.Run("/pets")
+	if err != nil {
+		log.Fatalf("!! %+v", err)
+	}
 
 	got := buffer.String()
-
 	assert.Contains(t, got, "GET")
 	assert.Contains(t, got, "request is ok")
 	assert.Contains(t, got, `{"pets":[{"id":1},{"id":2}]}`)
 	assert.Contains(t, got, "request is ok")
+}
 
+func TestValidateRouteNotMatch(t *testing.T) {
+	ts := testServer(t)
+	defer ts.Close()
+
+	// need to fix server address
+	url, _ := url.Parse(basePath)
+
+	buffer := bytes.Buffer{}
+	cli := New(&buffer, strings.NewReader(schemafile), *url)
+	err := cli.Run("/not_exists")
 	if err != nil {
 		log.Fatalf("!! %+v", err)
 	}
+
+	got := buffer.String()
+	assert.Contains(t, got, "/not_exists")
+	assert.Contains(t, got, "no matching operation was found")
 }
 
 func TestDumpRoutes(t *testing.T) {
