@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -37,7 +38,8 @@ func TestServer(t *testing.T) {
 	}
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafile))
+	url, _ := url.Parse("http://localhost:8080")
+	cli := New(&buffer, strings.NewReader(schemafile), *url)
 	err = cli.Run("/pets")
 
 	got := buffer.String()
@@ -54,7 +56,8 @@ func TestServer(t *testing.T) {
 
 func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafile))
+	url, _ := url.Parse("http://localhost:8080")
+	cli := New(&buffer, strings.NewReader(schemafile), *url)
 	err := cli.dumpRoutes()
 	if err != nil {
 		t.Fatal(err)

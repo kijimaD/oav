@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"net/url"
 	"reflect"
 	"strings"
 
@@ -21,18 +22,20 @@ import (
 )
 
 type CLI struct {
-	Out    io.Writer
-	Schema io.Reader
+	Out     io.Writer
+	Schema  io.Reader
+	BaseURL url.URL
 }
 
 type Runner interface {
 	Run() error
 }
 
-func New(out io.Writer, schema io.Reader) *CLI {
+func New(out io.Writer, schema io.Reader, url url.URL) *CLI {
 	return &CLI{
-		Out:    out,
-		Schema: schema,
+		Out:     out,
+		Schema:  schema,
+		BaseURL: url,
 	}
 }
 
@@ -58,7 +61,7 @@ func (cli *CLI) Run(path string) error {
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = cli.testPath(path, router, ctx)
+	err = cli.testPath(ctx, path, router)
 	if err != nil {
 		return err
 	}
@@ -66,11 +69,10 @@ func (cli *CLI) Run(path string) error {
 	return nil
 }
 
-func (cli *CLI) testPath(path string, router routers.Router, ctx context.Context) error {
-	baseURL := "http://localhost:8080"
-
+func (cli *CLI) testPath(ctx context.Context, path string, router routers.Router) error {
 	fmt.Fprintf(cli.Out, "%s ----------------------------------------\n", path)
-	req, err := http.NewRequest("GET", baseURL+path, strings.NewReader(`{}`))
+
+	req, err := http.NewRequest("GET", cli.BaseURL.String()+path, strings.NewReader(`{}`))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -155,7 +157,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 		log.Printf("valicate response is failed: %T", err)
 		return fmt.Errorf("validate response: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "response is ok")
+	fmt.Fprintf(cli.Out, "response is ok\n")
 	return nil
 }
 
