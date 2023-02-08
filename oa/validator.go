@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"net/url"
 	"reflect"
 	"strings"
 
@@ -20,13 +21,33 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
-//go:embed openapi.yml
-var spec []byte
+type CLI struct {
+	Out     io.Writer
+	Schema  io.Reader
+	BaseURL url.URL
+}
 
-func Run(path string) error {
+type Runner interface {
+	Run() error
+}
+
+func New(out io.Writer, schema io.Reader, url url.URL) *CLI {
+	return &CLI{
+		Out:     out,
+		Schema:  schema,
+		BaseURL: url,
+	}
+}
+
+func (cli *CLI) Run(path string) error {
 	ctx := context.Background()
 
-	doc, err := openapi3.NewLoader().LoadFromData(spec)
+	buf := new(bytes.Buffer)
+	_, errc := io.Copy(buf, cli.Schema)
+	if errc != nil {
+		return fmt.Errorf("%w", errc)
+	}
+	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
 	}
@@ -40,7 +61,7 @@ func Run(path string) error {
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = testPath(path, router, ctx)
+	err = cli.testPath(ctx, path, router)
 	if err != nil {
 		return err
 	}
@@ -48,28 +69,27 @@ func Run(path string) error {
 	return nil
 }
 
-func testPath(path string, router routers.Router, ctx context.Context) error {
-	baseURL := "http://localhost:8080"
+func (cli *CLI) testPath(ctx context.Context, path string, router routers.Router) error {
+	fmt.Fprintf(cli.Out, "%s ----------------------------------------\n", path)
 
-	log.Printf("%s ----------------------------------------", path)
-	req, err := http.NewRequest("GET", baseURL+path, strings.NewReader(`{}`))
+	req, err := http.NewRequest("GET", cli.BaseURL.String()+path, strings.NewReader(`{}`))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	if err := doRequest(ctx, router, req); err != nil {
+	if err := cli.doRequest(ctx, router, req); err != nil {
 		log.Println(strings.ReplaceAll(err.Error(), "\n", "\n\t"))
 	}
 
 	return nil
 }
 
-func doRequest(ctx context.Context, router routers.Router, req *http.Request) error {
+func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.Request) error {
 	req.Header.Set("Content-Type", "application/json")
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
 		return fmt.Errorf("find route: %w", err)
 	}
-	log.Println("find route is ok")
+	fmt.Fprintf(cli.Out, "find route is ok")
 
 	reqInput := &openapi3filter.RequestValidationInput{
 		Request:     req,
@@ -84,13 +104,13 @@ func doRequest(ctx context.Context, router routers.Router, req *http.Request) er
 	if err != nil {
 		log.Printf("[ERROR] dump request: %+v", err)
 	}
-	fmt.Println(strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
+	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		log.Printf("validate request is failed: %T", err)
 		return fmt.Errorf("validate request: %w", err)
 	}
-	log.Println("request is ok")
+	fmt.Fprint(cli.Out, "request is ok")
 
 	rec := httptest.NewRecorder()
 	func(w http.ResponseWriter, req *http.Request) {
@@ -123,7 +143,7 @@ func doRequest(ctx context.Context, router routers.Router, req *http.Request) er
 		log.Printf("[ERROR] dump request: %+v", err)
 		return err
 	}
-	fmt.Println(strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
+	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	res.Body = io.NopCloser(buf)
 	resInput := &openapi3filter.ResponseValidationInput{
@@ -137,11 +157,22 @@ func doRequest(ctx context.Context, router routers.Router, req *http.Request) er
 		log.Printf("valicate response is failed: %T", err)
 		return fmt.Errorf("validate response: %w", err)
 	}
-	log.Println("response is ok")
+	fmt.Fprintf(cli.Out, "response is ok\n")
 	return nil
 }
 
-func dumpRoutes(doc *openapi3.T) {
+func (cli *CLI) dumpRoutes() error {
+	buf := new(bytes.Buffer)
+	_, errc := io.Copy(buf, cli.Schema) // Reader -> []byte
+	if errc != nil {
+		return fmt.Errorf("%w", errc)
+	}
+
+	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("load doc: %w", err)
+	}
+
 	expectType := reflect.TypeOf(&openapi3.Operation{})
 	for k, path := range doc.Paths {
 		rv := reflect.ValueOf(path).Elem()
@@ -156,7 +187,9 @@ func dumpRoutes(doc *openapi3.T) {
 				continue
 			}
 			op := rfv.Interface().(*openapi3.Operation)
-			fmt.Printf("%-10s\t%-10s\t%s\n", k, rf.Name, op.OperationID)
+			fmt.Fprintf(cli.Out, "%-10s\t%-10s\t%s\n", k, rf.Name, op.OperationID)
 		}
 	}
+
+	return nil
 }
