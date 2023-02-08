@@ -13,11 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const basePath = "localhost:8080"
+const basePath = "http://localhost:8089"
 
 func TestServer(t *testing.T) {
 	// need to fix server address
-	l, err := net.Listen("tcp", basePath)
+	url, _ := url.Parse(basePath)
+	l, err := net.Listen("tcp", url.Host)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +39,6 @@ func TestServer(t *testing.T) {
 	}
 
 	buffer := bytes.Buffer{}
-	url, _ := url.Parse("http://localhost:8080")
 	cli := New(&buffer, strings.NewReader(schemafile), *url)
 	err = cli.Run("/pets")
 
@@ -56,7 +56,7 @@ func TestServer(t *testing.T) {
 
 func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
-	url, _ := url.Parse("http://localhost:8080")
+	url, _ := url.Parse(basePath)
 	cli := New(&buffer, strings.NewReader(schemafile), *url)
 	err := cli.dumpRoutes()
 	if err != nil {
@@ -87,7 +87,7 @@ info:
     email: norimaking777@gmail.com
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8089
     description: go server
   - url: http://localhost:6969
     description: mock(Prism)

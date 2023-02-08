@@ -10,12 +10,14 @@ import (
 
 func main() {
 	var rawURL string
-	if len(os.Args) < 1 {
+	var schemaPath string
+	if len(os.Args) < 2 {
 		panic("not enough arguments!")
 	}
-	rawURL = os.Args[1]
+	schemaPath = os.Args[1]
+	rawURL = os.Args[2]
 
-	file, err := os.Open("openapi.yml")
+	file, err := os.Open(schemaPath)
 	if err != nil {
 		panic(err)
 	}
