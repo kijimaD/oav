@@ -2,6 +2,7 @@ package oa
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func TestValidate(t *testing.T) {
 	cli := New(&buffer, strings.NewReader(schemafileA), *url)
 	err := cli.Run("/pets")
 	if err != nil {
-		log.Fatalf("!! %+v", err)
+		fmt.Fprint(&buffer, err)
 	}
 
 	got := buffer.String()
@@ -61,7 +62,7 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	cli := New(&buffer, strings.NewReader(schemafileA), *url)
 	err := cli.Run("/not_exists")
 	if err != nil {
-		log.Fatalf("!! %+v", err)
+		fmt.Fprint(&buffer, err)
 	}
 
 	got := buffer.String()
@@ -79,7 +80,7 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	cli := New(&buffer, strings.NewReader(schemafileB), *url)
 	err := cli.Run("/pets")
 	if err != nil {
-		log.Fatalf("!! %+v", err)
+		fmt.Fprint(&buffer, err)
 	}
 
 	got := buffer.String()
@@ -95,7 +96,7 @@ func TestDumpRoutes(t *testing.T) {
 	cli := New(&buffer, strings.NewReader(schemafileA), *url)
 	err := cli.dumpRoutes()
 	if err != nil {
-		t.Fatal(err)
+		fmt.Fprint(&buffer, err)
 	}
 
 	got := buffer.String()
