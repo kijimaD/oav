@@ -121,26 +121,11 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 
 func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
 	rec := httptest.NewRecorder()
-	func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
 
-		resp, err := http.Get(req.URL.String())
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-		byteArray, _ := io.ReadAll(resp.Body)
-
-		var jsonBody map[string]interface{}
-		err = json.Unmarshal(byteArray, &jsonBody)
-		if err != nil {
-			panic(err)
-		}
-		err = json.NewEncoder(w).Encode(jsonBody)
-		if err != nil {
-			panic(err)
-		}
-	}(rec, req)
+	err := cli.request(rec, req)
+	if err != nil {
+		return err
+	}
 
 	res := rec.Result()
 	buf := new(bytes.Buffer)
@@ -164,6 +149,29 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 		return fmt.Errorf("validate response: %w", err)
 	}
 	fmt.Fprintf(cli.Out, "response is ok\n")
+	return nil
+}
+
+func (cli *CLI) request(w http.ResponseWriter, req *http.Request) error {
+	w.Header().Add("Content-Type", "application/json")
+
+	resp, err := http.Get(req.URL.String())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	byteArray, _ := io.ReadAll(resp.Body)
+
+	var jsonBody map[string]interface{}
+	err = json.Unmarshal(byteArray, &jsonBody)
+	if err != nil {
+		return err
+	}
+	err = json.NewEncoder(w).Encode(jsonBody)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
