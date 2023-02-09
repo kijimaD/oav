@@ -76,7 +76,7 @@ func (cli *CLI) testPath(ctx context.Context, path string, router routers.Router
 		return fmt.Errorf("new request: %w", err)
 	}
 	if err := cli.doRequest(ctx, router, req); err != nil {
-		fmt.Fprintf(cli.Out, strings.ReplaceAll(err.Error(), "\n", "\n\t"))
+		fmt.Fprint(cli.Out, strings.ReplaceAll(err.Error(), "\n", "\n\t"))
 	}
 
 	return nil
