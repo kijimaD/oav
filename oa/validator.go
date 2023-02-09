@@ -81,7 +81,7 @@ func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Ro
 	if err != nil {
 		return err
 	}
-	if err := cli.doRequest(ctx, router, req, reqInput); err != nil {
+	if err := cli.doRequest(ctx, req, reqInput); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	return reqInput, nil
 }
 
-func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
+func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
 	rec := httptest.NewRecorder()
 
 	err := cli.request(rec, req)
