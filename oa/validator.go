@@ -77,18 +77,22 @@ func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Ro
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	if err := cli.doRequest(ctx, router, req); err != nil {
-		fmt.Fprint(cli.Out, strings.ReplaceAll(err.Error(), "\n", "\n\t"))
+	reqInput, err := cli.validateRequest(ctx, router, req)
+	if err != nil {
+		return err
+	}
+	if err := cli.doRequest(ctx, router, req, reqInput); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.Request) error {
+func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req *http.Request) (*openapi3filter.RequestValidationInput, error) {
 	req.Header.Set("Content-Type", "application/json")
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
-		return fmt.Errorf("find route: %w", err)
+		return nil, fmt.Errorf("find route: %w", err)
 	}
 	fmt.Fprintf(cli.Out, "find route is ok")
 
@@ -103,21 +107,25 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 
 	b, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		return fmt.Errorf("[ERROR] dump request: %+v", err)
+		return nil, fmt.Errorf("[ERROR] dump request: %+v", err)
 	}
 	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
-		return fmt.Errorf("validate request: %w", err)
+		return nil, fmt.Errorf("validate request: %w", err)
 	}
 	fmt.Fprint(cli.Out, "request is ok")
 
+	return reqInput, nil
+}
+
+func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
 	rec := httptest.NewRecorder()
 	func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 
-		resp, errGet := http.Get(req.URL.String())
-		if errGet != nil {
+		resp, err := http.Get(req.URL.String())
+		if err != nil {
 			panic(err)
 		}
 		defer resp.Body.Close()
@@ -128,7 +136,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 		if err != nil {
 			panic(err)
 		}
-		err := json.NewEncoder(w).Encode(jsonBody)
+		err = json.NewEncoder(w).Encode(jsonBody)
 		if err != nil {
 			panic(err)
 		}
@@ -138,7 +146,7 @@ func (cli *CLI) doRequest(ctx context.Context, router routers.Router, req *http.
 	buf := new(bytes.Buffer)
 	res.Body = io.NopCloser(io.TeeReader(res.Body, buf))
 
-	b, err = httputil.DumpResponse(res, true)
+	b, err := httputil.DumpResponse(res, true)
 	if err != nil {
 		return err
 	}
