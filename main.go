@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	var rawURL string
 	var schemaPath string
+	var rawURL string
 	if len(os.Args) < 2 {
 		panic("not enough arguments!")
 	}
@@ -23,7 +23,6 @@ func main() {
 	}
 
 	baseURL, err := url.Parse(rawURL)
-
 	if err != nil {
 		panic(err)
 	}

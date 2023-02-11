@@ -63,10 +63,12 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	err := cli.Run("/not_exists")
 	if err != nil {
 		fmt.Fprint(&buffer, err)
+		got := buffer.String()
+		assert.Contains(t, got, "/not_exists")
+	} else {
+		t.Errorf("expected: error, actual: no error")
 	}
 
-	got := buffer.String()
-	assert.Contains(t, got, "/not_exists")
 }
 
 func TestValidateRouteInvalidResponse(t *testing.T) {
@@ -81,13 +83,15 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	err := cli.Run("/pets")
 	if err != nil {
 		fmt.Fprint(&buffer, err)
+		got := buffer.String()
+		assert.Contains(t, got, "/pets")
+		assert.Contains(t, got, "value must be a string")
+		assert.Contains(t, got, "description\": \"pet ID")
+		assert.Contains(t, got, "type\": \"string")
+	} else {
+		t.Errorf("expected: error, actual: no error")
 	}
 
-	got := buffer.String()
-	assert.Contains(t, got, "/pets")
-	assert.Contains(t, got, "value must be a string")
-	assert.Contains(t, got, "description\": \"pet ID")
-	assert.Contains(t, got, "type\": \"string")
 }
 
 func TestDumpRoutes(t *testing.T) {
