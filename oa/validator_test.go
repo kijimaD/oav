@@ -47,8 +47,11 @@ func TestValidate(t *testing.T) {
 	got := buffer.String()
 	assert.Contains(t, got, "GET")
 	assert.Contains(t, got, "request is ok")
-	assert.Contains(t, got, `{"pets":[{"id":1},{"id":2}]}`)
-	assert.Contains(t, got, "request is ok")
+	assert.Contains(t, got, `"pets"`)
+	assert.Contains(t, got, `"animal"`)
+	assert.Contains(t, got, `"cat"`)
+	assert.Contains(t, got, `"dog"`)
+	assert.Contains(t, got, "response is ok")
 }
 
 func TestValidateRouteNotMatch(t *testing.T) {
@@ -174,10 +177,26 @@ components:
       type: array
       description: list pets
       items:
+        required:
+          - id
+          - name
+          - animal
         properties:
           id:
             type: integer
             description: pet ID
+          name:
+            type: string
+          animal:
+            type: object
+            required:
+              - dog
+              - cat
+            properties:
+              dog:
+                type: string
+              cat:
+                type: string
     Error:
       required:
         - code
@@ -195,8 +214,14 @@ components:
         pets:
           - id: 1
             name: dog
+            animal:
+              dog: pochi
+              cat: tama
           - id: 2
             name: cat
+            animal:
+              dog: pochi
+              cat: tama
   parameters:
     Limit:
       name: limit
