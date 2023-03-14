@@ -51,10 +51,10 @@ func (cli *CLI) Run(path string) error {
 		return fmt.Errorf("load doc: %w", err)
 	}
 	// 謎のバリデーションエラーが出るので一旦スルー
-	// err = doc.Validate(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("validate doc: %w", err)
-	// }
+	err = doc.Validate(ctx)
+	if err != nil {
+		return fmt.Errorf("validate doc: %w", err)
+	}
 
 	router, err := gorillamux.NewRouter(doc)
 	if err != nil {
