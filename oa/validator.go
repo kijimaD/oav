@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"reflect"
@@ -115,41 +115,37 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		return nil, fmt.Errorf("validate request: %w", err)
 	}
-	fmt.Fprint(cli.Out, "request is ok")
+	fmt.Fprint(cli.Out, "request is ok\n")
 
 	return reqInput, nil
 }
 
 func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
-	rec := httptest.NewRecorder()
+	response, e := http.DefaultClient.Do(req)
+	if e != nil {
+		return e
+	}
+	defer response.Body.Close()
 
-	err := cli.request(rec, req)
-	if err != nil {
-		return err
+	body, e := ioutil.ReadAll(response.Body)
+	fmt.Fprintf(cli.Out, "\treal: %s", string(body))
+
+	if e != nil {
+		return e
 	}
 
-	res := rec.Result()
-	buf := new(bytes.Buffer)
-	res.Body = io.NopCloser(io.TeeReader(res.Body, buf))
-
-	b, err := httputil.DumpResponse(res, true)
-	if err != nil {
-		return err
-	}
-	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
-
-	res.Body = io.NopCloser(buf)
 	resInput := &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: reqInput,
-		Status:                 200,
-		Header:                 res.Header,
-		Body:                   res.Body,
+		Status:                 response.StatusCode,
+		Header:                 response.Header,
 		Options:                nil, // ?
 	}
+	resInput.SetBodyBytes(body)
+
 	if err := openapi3filter.ValidateResponse(ctx, resInput); err != nil {
 		return fmt.Errorf("validate response: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "response is ok\n")
+	fmt.Fprintf(cli.Out, "\tresponse is ok\n")
 	return nil
 }
 
