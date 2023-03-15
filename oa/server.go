@@ -23,6 +23,11 @@ type Animal struct {
 }
 
 type AnimalNest struct {
+	ID      int     `json:"id"`
+	Arrnest []IDobj `json:"arrnest"`
+}
+
+type IDobj struct {
 	ID int `json:"id"`
 }
 
@@ -48,7 +53,8 @@ func pets(w http.ResponseWriter, r *http.Request) {
 					Dog: "d",
 					Cat: "c",
 					AnimalNest: AnimalNest{
-						ID: 1,
+						ID:      1,
+						Arrnest: []IDobj{IDobj{1}, IDobj{2}},
 					},
 				},
 			},
@@ -59,7 +65,8 @@ func pets(w http.ResponseWriter, r *http.Request) {
 					Dog: "d",
 					Cat: "c",
 					AnimalNest: AnimalNest{
-						ID: 1,
+						ID:      1,
+						Arrnest: []IDobj{IDobj{1}, IDobj{2}},
 					},
 				},
 			},

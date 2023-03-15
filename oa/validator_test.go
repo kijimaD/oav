@@ -202,9 +202,18 @@ components:
                 type: object
                 required:
                   - id
+                  - arrnest
                 properties:
                   id:
                     type: integer
+                  arrnest:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+
     Error:
       required:
         - code
@@ -215,6 +224,7 @@ components:
           format: int32
         message:
           type: string
+
   examples:
     PetsResponse:
       description: pets
@@ -227,6 +237,9 @@ components:
               cat: tama
               animalnest:
                 id: 1
+                arrnest:
+                  - id: 1
+                  - id: 2
           - id: 2
             name: cat
             animal:
@@ -234,6 +247,10 @@ components:
               cat: tama
               animalnest:
                 id: 1
+                arrnest:
+                  - id: 3
+                  - id: 4
+
   parameters:
     Limit:
       name: limit
