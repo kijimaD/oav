@@ -25,5 +25,8 @@ func main() {
 	}
 
 	c := oa.New(os.Stdout, file, *baseURL)
-	c.DumpRoutes()
+	err = c.DumpRoutes()
+	if err != nil {
+		panic(err)
+	}
 }
