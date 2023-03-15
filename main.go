@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/url"
 	"os"
 
@@ -10,27 +9,21 @@ import (
 
 func main() {
 	var schemaPath string
-	var rawURL string
-	if len(os.Args) < 2 {
+	if len(os.Args) < 1 {
 		panic("not enough arguments!")
 	}
 	schemaPath = os.Args[1]
-	rawURL = os.Args[2]
 
 	file, err := os.Open(schemaPath)
 	if err != nil {
 		panic(err)
 	}
 
-	baseURL, err := url.Parse(rawURL)
+	baseURL, err := url.Parse("dummy")
 	if err != nil {
 		panic(err)
 	}
 
 	c := oa.New(os.Stdout, file, *baseURL)
-	err = c.Run("/pets")
-
-	if err != nil {
-		log.Fatalf("!! %+v", err)
-	}
+	c.DumpRoutes()
 }

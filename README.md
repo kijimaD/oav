@@ -1,12 +1,10 @@
 # oav
 
-Portable OpenAPI validation tool.
+oav is OpenAPI Validation tool.
 
 inspired code: https://zenn.dev/podhmo/scraps/5dbfa70654f9f0
 
-- チェックするのはserversに登録されているアドレスである必要がある。
-
-"" Usage
+## Usage
 
 ```go
 import (
@@ -35,9 +33,13 @@ func TestSchema() {}
 	}
 ```
 
-## Check
+- チェックするのはserversに登録されているアドレスである必要がある。
+
+## command
+
+dump schema routes.
 
 ```shell
 docker-compose up -d
-go run . ./openapi.yml http://localhost:8080
+go run . openapi.yml
 ```

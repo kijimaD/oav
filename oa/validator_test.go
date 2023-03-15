@@ -101,7 +101,7 @@ func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
 	url, _ := url.Parse(basePath)
 	cli := New(&buffer, strings.NewReader(schemafileA), *url)
-	err := cli.dumpRoutes()
+	err := cli.DumpRoutes()
 	if err != nil {
 		fmt.Fprint(&buffer, err)
 	}

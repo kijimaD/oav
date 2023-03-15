@@ -147,7 +147,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 	return nil
 }
 
-func (cli *CLI) dumpRoutes() error {
+func (cli *CLI) DumpRoutes() error {
 	buf := new(bytes.Buffer)
 	_, errc := io.Copy(buf, cli.Schema) // Reader -> []byte
 	if errc != nil {
@@ -160,6 +160,8 @@ func (cli *CLI) dumpRoutes() error {
 	}
 
 	expectType := reflect.TypeOf(&openapi3.Operation{})
+	fmt.Fprintf(cli.Out, "%-10s\t%-10s\t%s\n", "Endpoint", "Method", "ID")
+	fmt.Fprintf(cli.Out, "%-10s\t%-10s\t%s\n", strings.Repeat("─", 10), strings.Repeat("─", 10), strings.Repeat("─", 10))
 	for k, path := range doc.Paths {
 		rv := reflect.ValueOf(path).Elem()
 		rt := reflect.TypeOf(path).Elem()
