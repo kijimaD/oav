@@ -17,8 +17,13 @@ type Pet struct {
 }
 
 type Animal struct {
-	Dog string `json:"dog"`
-	Cat string `json:"cat"`
+	Dog        string     `json:"dog"`
+	Cat        string     `json:"cat"`
+	AnimalNest AnimalNest `json:"animalnest"`
+}
+
+type AnimalNest struct {
+	ID int `json:"id"`
 }
 
 func routes() (mux *http.ServeMux) {
@@ -42,6 +47,9 @@ func pets(w http.ResponseWriter, r *http.Request) {
 				Animal: Animal{
 					Dog: "d",
 					Cat: "c",
+					AnimalNest: AnimalNest{
+						ID: 1,
+					},
 				},
 			},
 			{
@@ -50,6 +58,9 @@ func pets(w http.ResponseWriter, r *http.Request) {
 				Animal: Animal{
 					Dog: "d",
 					Cat: "c",
+					AnimalNest: AnimalNest{
+						ID: 1,
+					},
 				},
 			},
 		},

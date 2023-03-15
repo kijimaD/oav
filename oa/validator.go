@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -127,7 +125,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 	}
 	defer response.Body.Close()
 
-	body, e := ioutil.ReadAll(response.Body)
+	body, e := io.ReadAll(response.Body)
 	fmt.Fprintf(cli.Out, "\treal: %s", string(body))
 
 	if e != nil {
@@ -146,29 +144,6 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 		return fmt.Errorf("validate response: %w", err)
 	}
 	fmt.Fprintf(cli.Out, "\tresponse is ok\n")
-	return nil
-}
-
-func (cli *CLI) request(w http.ResponseWriter, req *http.Request) error {
-	w.Header().Add("Content-Type", "application/json")
-
-	resp, err := http.Get(req.URL.String())
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	byteArray, _ := io.ReadAll(resp.Body)
-
-	var jsonBody map[string]interface{}
-	err = json.Unmarshal(byteArray, &jsonBody)
-	if err != nil {
-		return err
-	}
-	err = json.NewEncoder(w).Encode(jsonBody)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

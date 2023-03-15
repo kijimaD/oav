@@ -192,11 +192,19 @@ components:
             required:
               - dog
               - cat
+              - animalnest
             properties:
               dog:
                 type: string
               cat:
                 type: string
+              animalnest:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: integer
     Error:
       required:
         - code
@@ -217,11 +225,15 @@ components:
             animal:
               dog: pochi
               cat: tama
+              animalnest:
+                id: 1
           - id: 2
             name: cat
             animal:
               dog: pochi
               cat: tama
+              animalnest:
+                id: 1
   parameters:
     Limit:
       name: limit
