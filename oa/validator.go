@@ -39,7 +39,7 @@ func New(out io.Writer, schema io.Reader, url url.URL) *CLI {
 func (cli *CLI) Run(path string) error {
 	ctx := context.Background()
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	_, errc := io.Copy(buf, cli.Schema)
 	if errc != nil {
 		return fmt.Errorf("%w", errc)

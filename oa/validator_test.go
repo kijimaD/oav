@@ -3,6 +3,7 @@ package oa
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http/httptest"
@@ -38,19 +39,38 @@ func TestValidate(t *testing.T) {
 	url, _ := url.Parse(basePath)
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafileA), *url)
+	inbuf := bytes.Buffer{}
+	// TODO: readerは2回め以降は読み込めない。bytesにしたほうがよさそう
+	r := io.TeeReader(strings.NewReader(schemafileValid), &inbuf)
+	cli := New(&buffer, r, *url)
 	err := cli.Run("/pets")
 	if err != nil {
 		fmt.Fprint(&buffer, err)
 	}
 
 	got := buffer.String()
+	assert.Contains(t, got, "/pets")
 	assert.Contains(t, got, "GET")
 	assert.Contains(t, got, "request is ok")
 	assert.Contains(t, got, `"pets"`)
 	assert.Contains(t, got, `"animal"`)
 	assert.Contains(t, got, `"cat"`)
 	assert.Contains(t, got, `"dog"`)
+	assert.Contains(t, got, "response is ok")
+
+	// ================
+
+	cli.Schema = io.TeeReader(strings.NewReader(schemafileValid), &inbuf)
+	buffer = bytes.Buffer{}
+	err = cli.Run("/fishs")
+	if err != nil {
+		fmt.Fprint(&buffer, err)
+	}
+
+	got = buffer.String()
+	assert.Contains(t, got, "/fishs")
+	assert.Contains(t, got, "GET")
+	assert.Contains(t, got, "request is ok")
 	assert.Contains(t, got, "response is ok")
 }
 
@@ -62,7 +82,7 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	url, _ := url.Parse(basePath)
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafileA), *url)
+	cli := New(&buffer, strings.NewReader(schemafileValid), *url)
 	err := cli.Run("/not_exists")
 	if err != nil {
 		fmt.Fprint(&buffer, err)
@@ -82,7 +102,7 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	url, _ := url.Parse(basePath)
 
 	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafileB), *url)
+	cli := New(&buffer, strings.NewReader(schemafileNotMatch), *url)
 	err := cli.Run("/pets")
 	if err != nil {
 		fmt.Fprint(&buffer, err)
@@ -94,13 +114,12 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	} else {
 		t.Errorf("expected: error, actual: no error")
 	}
-
 }
 
 func TestDumpRoutes(t *testing.T) {
 	buffer := bytes.Buffer{}
 	url, _ := url.Parse(basePath)
-	cli := New(&buffer, strings.NewReader(schemafileA), *url)
+	cli := New(&buffer, strings.NewReader(schemafileValid), *url)
 	err := cli.DumpRoutes()
 	if err != nil {
 		fmt.Fprint(&buffer, err)
@@ -112,7 +131,7 @@ func TestDumpRoutes(t *testing.T) {
 	assert.Contains(t, got, "list_pets")
 }
 
-const schemafileA = `---
+const schemafileValid = `---
 openapi: "3.1.0"
 
 info:
@@ -170,6 +189,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /fishs:
+    get:
+      operationId: list_fishs
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                required:
+                  - id
+                properties:
+                  id:
+                    type: integer
 
 components:
   schemas:
@@ -262,7 +295,7 @@ components:
         format: int32
 `
 
-const schemafileB = `---
+const schemafileNotMatch = `---
 openapi: "3.1.0"
 
 info:

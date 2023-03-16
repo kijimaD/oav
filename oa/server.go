@@ -31,10 +31,15 @@ type IDobj struct {
 	ID int `json:"id"`
 }
 
+type Fish struct {
+	ID int `json:"id"`
+}
+
 func routes() (mux *http.ServeMux) {
 	mux = http.NewServeMux()
 	mux.HandleFunc("/", root)
 	mux.HandleFunc("/pets", pets)
+	mux.HandleFunc("/fishs", fishs)
 
 	return
 }
@@ -71,6 +76,17 @@ func pets(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		},
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err := json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func fishs(w http.ResponseWriter, r *http.Request) {
+	resp := Fish{
+		ID: 1,
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err := json.NewEncoder(w).Encode(resp)
