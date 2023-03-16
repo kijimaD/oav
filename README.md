@@ -4,6 +4,20 @@ oav is OpenAPI Validation tool.
 
 inspired code: https://zenn.dev/podhmo/scraps/5dbfa70654f9f0
 
+## install
+
+cli
+
+```shell
+go install github.com/kijimaD/oav@main
+```
+
+library
+
+```shell
+go get github.com/kijimaD/oav@main
+```
+
 ## Usage
 
 ```go
@@ -42,4 +56,8 @@ dump schema routes.
 ```shell
 docker-compose up -d
 go run . openapi.yml
+
+Endpoint        Method          ID
+──────────      ──────────      ──────────
+/pets           Get             list_pets
 ```
