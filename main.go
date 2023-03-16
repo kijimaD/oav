@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"io"
 	"net/url"
 	"os"
 
@@ -18,13 +20,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, file)
+	if err != nil {
+		panic(err)
+	}
 
 	baseURL, err := url.Parse("dummy")
 	if err != nil {
 		panic(err)
 	}
 
-	c := oa.New(os.Stdout, file, *baseURL)
+	c := oa.New(os.Stdout, buf, *baseURL)
 	err = c.DumpRoutes()
 	if err != nil {
 		panic(err)

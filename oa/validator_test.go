@@ -3,12 +3,10 @@ package oa
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,18 +35,16 @@ func TestValidate(t *testing.T) {
 
 	// need to fix server address
 	url, _ := url.Parse(basePath)
+	outbuf := bytes.Buffer{}
+	inbuf := bytes.NewBufferString(schemafileValid)
 
-	buffer := bytes.Buffer{}
-	inbuf := bytes.Buffer{}
-	// TODO: readerは2回め以降は読み込めない。bytesにしたほうがよさそう
-	r := io.TeeReader(strings.NewReader(schemafileValid), &inbuf)
-	cli := New(&buffer, r, *url)
+	cli := New(&outbuf, *inbuf, *url)
 	err := cli.Run("/pets")
 	if err != nil {
-		fmt.Fprint(&buffer, err)
+		fmt.Fprint(&outbuf, err)
 	}
 
-	got := buffer.String()
+	got := outbuf.String()
 	assert.Contains(t, got, "/pets")
 	assert.Contains(t, got, "GET")
 	assert.Contains(t, got, "request is ok")
@@ -60,14 +56,13 @@ func TestValidate(t *testing.T) {
 
 	// ================
 
-	cli.Schema = io.TeeReader(strings.NewReader(schemafileValid), &inbuf)
-	buffer = bytes.Buffer{}
+	outbuf = bytes.Buffer{}
 	err = cli.Run("/fishs")
 	if err != nil {
-		fmt.Fprint(&buffer, err)
+		fmt.Fprint(&outbuf, err)
 	}
 
-	got = buffer.String()
+	got = outbuf.String()
 	assert.Contains(t, got, "/fishs")
 	assert.Contains(t, got, "GET")
 	assert.Contains(t, got, "request is ok")
@@ -79,14 +74,15 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	defer ts.Close()
 
 	// need to fix server address
+	outbuf := bytes.Buffer{}
 	url, _ := url.Parse(basePath)
+	inbuf := bytes.NewBufferString(schemafileValid)
 
-	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafileValid), *url)
+	cli := New(&outbuf, *inbuf, *url)
 	err := cli.Run("/not_exists")
 	if err != nil {
-		fmt.Fprint(&buffer, err)
-		got := buffer.String()
+		fmt.Fprint(&outbuf, err)
+		got := outbuf.String()
 		assert.Contains(t, got, "/not_exists")
 	} else {
 		t.Errorf("expected: error, actual: no error")
@@ -99,14 +95,15 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	defer ts.Close()
 
 	// need to fix server address
+	outbuf := bytes.Buffer{}
 	url, _ := url.Parse(basePath)
+	inbuf := bytes.NewBufferString(schemafileNotMatch)
 
-	buffer := bytes.Buffer{}
-	cli := New(&buffer, strings.NewReader(schemafileNotMatch), *url)
+	cli := New(&outbuf, *inbuf, *url)
 	err := cli.Run("/pets")
 	if err != nil {
-		fmt.Fprint(&buffer, err)
-		got := buffer.String()
+		fmt.Fprint(&outbuf, err)
+		got := outbuf.String()
 		assert.Contains(t, got, "/pets")
 		assert.Contains(t, got, "value must be a string")
 		assert.Contains(t, got, "description\": \"pet ID")
@@ -117,15 +114,17 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 }
 
 func TestDumpRoutes(t *testing.T) {
-	buffer := bytes.Buffer{}
+	outbuf := bytes.Buffer{}
 	url, _ := url.Parse(basePath)
-	cli := New(&buffer, strings.NewReader(schemafileValid), *url)
+	inbuf := bytes.NewBufferString(schemafileValid)
+
+	cli := New(&outbuf, *inbuf, *url)
 	err := cli.DumpRoutes()
 	if err != nil {
-		fmt.Fprint(&buffer, err)
+		fmt.Fprint(&outbuf, err)
 	}
 
-	got := buffer.String()
+	got := outbuf.String()
 	assert.Contains(t, got, "/pets")
 	assert.Contains(t, got, "Get")
 	assert.Contains(t, got, "list_pets")

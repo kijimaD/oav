@@ -20,7 +20,7 @@ import (
 
 type CLI struct {
 	Out     io.Writer
-	Schema  io.Reader
+	Schema  bytes.Buffer
 	BaseURL url.URL
 }
 
@@ -28,7 +28,7 @@ type Runner interface {
 	Run() error
 }
 
-func New(out io.Writer, schema io.Reader, url url.URL) *CLI {
+func New(out io.Writer, schema bytes.Buffer, url url.URL) *CLI {
 	return &CLI{
 		Out:     out,
 		Schema:  schema,
@@ -39,12 +39,7 @@ func New(out io.Writer, schema io.Reader, url url.URL) *CLI {
 func (cli *CLI) Run(path string) error {
 	ctx := context.Background()
 
-	buf := &bytes.Buffer{}
-	_, errc := io.Copy(buf, cli.Schema)
-	if errc != nil {
-		return fmt.Errorf("%w", errc)
-	}
-	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
+	doc, err := openapi3.NewLoader().LoadFromData(cli.Schema.Bytes())
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
 	}
@@ -148,13 +143,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 }
 
 func (cli *CLI) DumpRoutes() error {
-	buf := new(bytes.Buffer)
-	_, errc := io.Copy(buf, cli.Schema) // Reader -> []byte
-	if errc != nil {
-		return fmt.Errorf("%w", errc)
-	}
-
-	doc, err := openapi3.NewLoader().LoadFromData(buf.Bytes())
+	doc, err := openapi3.NewLoader().LoadFromData(cli.Schema.Bytes())
 	if err != nil {
 		return fmt.Errorf("load doc: %w", err)
 	}
