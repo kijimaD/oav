@@ -36,7 +36,7 @@ func New(out io.Writer, schema bytes.Buffer, url url.URL) *CLI {
 	}
 }
 
-func (cli *CLI) Run(path string, method string) error {
+func (cli *CLI) Run(path string, method string, body string) error {
 	ctx := context.Background()
 
 	doc, err := openapi3.NewLoader().LoadFromData(cli.Schema.Bytes())
@@ -54,7 +54,7 @@ func (cli *CLI) Run(path string, method string) error {
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = cli.validatePath(ctx, path, router, method)
+	err = cli.validatePath(ctx, path, router, method, body)
 	if err != nil {
 		return err
 	}
@@ -64,10 +64,10 @@ func (cli *CLI) Run(path string, method string) error {
 
 const separator = "────────────────────────────────────"
 
-func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string) error {
+func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string) error {
 	fmt.Fprintf(cli.Out, "%s %s\n", path, separator)
 
-	req, err := http.NewRequest(method, cli.BaseURL.String()+path, strings.NewReader(`{}`))
+	req, err := http.NewRequest(method, cli.BaseURL.String()+path, strings.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
