@@ -93,7 +93,7 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err != nil {
 		return nil, fmt.Errorf("find route: %w", err)
 	}
-	fmt.Fprintf(cli.Out, MsgRouteGood)
+	fmt.Fprint(cli.Out, MsgRouteGood)
 
 	reqInput := &openapi3filter.RequestValidationInput{
 		Request:     req,
@@ -113,7 +113,7 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		return nil, fmt.Errorf("validate request: %w", err)
 	}
-	fmt.Fprintf(cli.Out, MsgReqGood)
+	fmt.Fprint(cli.Out, MsgReqGood)
 
 	return reqInput, nil
 }
@@ -147,7 +147,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 	if err := openapi3filter.ValidateResponse(ctx, resInput); err != nil {
 		return fmt.Errorf("validate response: %w", err)
 	}
-	fmt.Fprintf(cli.Out, MsgResGood)
+	fmt.Fprint(cli.Out, MsgResGood)
 	return nil
 }
 
