@@ -83,13 +83,17 @@ func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Ro
 	return nil
 }
 
+const MsgRouteGood = "✓ find route\n"
+const MsgReqGood = "\n✓ request valid\n"
+const MsgResGood = "✓ response valid\n\n"
+
 func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req *http.Request) (*openapi3filter.RequestValidationInput, error) {
 	req.Header.Set("Content-Type", "application/json")
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
 		return nil, fmt.Errorf("find route: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "✓ find route\n")
+	fmt.Fprintf(cli.Out, MsgRouteGood)
 
 	reqInput := &openapi3filter.RequestValidationInput{
 		Request:     req,
@@ -109,7 +113,7 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		return nil, fmt.Errorf("validate request: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "\n✓ request valid\n")
+	fmt.Fprintf(cli.Out, MsgReqGood)
 
 	return reqInput, nil
 }
@@ -143,7 +147,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 	if err := openapi3filter.ValidateResponse(ctx, resInput); err != nil {
 		return fmt.Errorf("validate response: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "✓ response valid\n\n")
+	fmt.Fprintf(cli.Out, MsgResGood)
 	return nil
 }
 
