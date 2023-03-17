@@ -46,13 +46,14 @@ func TestValidate(t *testing.T) {
 
 	got := outbuf.String()
 	assert.Contains(t, got, "/pets")
+	assert.Contains(t, got, "find route")
 	assert.Contains(t, got, "GET")
-	assert.Contains(t, got, "request is ok")
+	assert.Contains(t, got, "request valid")
 	assert.Contains(t, got, `"pets"`)
 	assert.Contains(t, got, `"animal"`)
 	assert.Contains(t, got, `"cat"`)
 	assert.Contains(t, got, `"dog"`)
-	assert.Contains(t, got, "response is ok")
+	assert.Contains(t, got, "response valid")
 
 	// ================
 
@@ -64,9 +65,10 @@ func TestValidate(t *testing.T) {
 
 	got = outbuf.String()
 	assert.Contains(t, got, "/fishs")
+	assert.Contains(t, got, "find route")
 	assert.Contains(t, got, "GET")
-	assert.Contains(t, got, "request is ok")
-	assert.Contains(t, got, "response is ok")
+	assert.Contains(t, got, "request valid")
+	assert.Contains(t, got, "response valid")
 }
 
 func TestValidateRouteNotMatch(t *testing.T) {

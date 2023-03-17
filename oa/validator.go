@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,7 +66,7 @@ func (cli *CLI) Run(path string, method string, body string) error {
 const separator = "────────────────────────────────────"
 
 func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string) error {
-	fmt.Fprintf(cli.Out, "%s %s\n", path, separator)
+	fmt.Fprintf(cli.Out, "%s\n%s\n\n", separator, path)
 
 	req, err := http.NewRequest(method, cli.BaseURL.String()+path, strings.NewReader(body))
 	if err != nil {
@@ -88,7 +89,7 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err != nil {
 		return nil, fmt.Errorf("find route: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "find route is ok")
+	fmt.Fprintf(cli.Out, "✓ find route\n")
 
 	reqInput := &openapi3filter.RequestValidationInput{
 		Request:     req,
@@ -103,29 +104,33 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] dump request: %+v", err)
 	}
-	fmt.Fprint(cli.Out, strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
+	fmt.Fprintf(cli.Out, "%s", strings.ReplaceAll("\t"+string(b), "\n", "\n\t"))
 
 	if err := openapi3filter.ValidateRequest(ctx, reqInput); err != nil {
 		return nil, fmt.Errorf("validate request: %w", err)
 	}
-	fmt.Fprint(cli.Out, "request is ok\n")
+	fmt.Fprintf(cli.Out, "\n✓ request valid\n")
 
 	return reqInput, nil
 }
 
 func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
-	response, e := http.DefaultClient.Do(req)
-	if e != nil {
-		return e
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
 	}
 	defer response.Body.Close()
 
-	body, e := io.ReadAll(response.Body)
-	fmt.Fprintf(cli.Out, "\treal: %s", string(body))
-
-	if e != nil {
-		return e
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
 	}
+
+	buf := bytes.Buffer{}
+	if err := json.Indent(&buf, body, "\t", "  "); err != nil {
+		return err
+	}
+	fmt.Fprintf(cli.Out, "\t%s", buf.String())
 
 	resInput := &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: reqInput,
@@ -138,7 +143,7 @@ func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *open
 	if err := openapi3filter.ValidateResponse(ctx, resInput); err != nil {
 		return fmt.Errorf("validate response: %w", err)
 	}
-	fmt.Fprintf(cli.Out, "\tresponse is ok\n")
+	fmt.Fprintf(cli.Out, "✓ response valid\n\n")
 	return nil
 }
 
