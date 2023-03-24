@@ -37,7 +37,7 @@ func New(out io.Writer, schema bytes.Buffer, url url.URL) *CLI {
 	}
 }
 
-func (cli *CLI) Run(path string, method string, body string) error {
+func (cli *CLI) Run(path string, method string, body string, bearer string) error {
 	ctx := context.Background()
 
 	doc, err := openapi3.NewLoader().LoadFromData(cli.Schema.Bytes())
@@ -55,7 +55,7 @@ func (cli *CLI) Run(path string, method string, body string) error {
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = cli.validatePath(ctx, path, router, method, body)
+	err = cli.validatePath(ctx, path, router, method, body, bearer)
 	if err != nil {
 		return err
 	}
@@ -65,14 +65,14 @@ func (cli *CLI) Run(path string, method string, body string) error {
 
 const separator = "────────────────────────────────────"
 
-func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string) error {
+func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string, bearer string) error {
 	fmt.Fprintf(cli.Out, "%s\n%s\n\n", separator, path)
 
 	req, err := http.NewRequest(method, cli.BaseURL.String()+path, strings.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	reqInput, err := cli.validateRequest(ctx, router, req)
+	reqInput, err := cli.validateRequest(ctx, router, req, bearer)
 	if err != nil {
 		return err
 	}
@@ -87,8 +87,9 @@ const MsgRouteGood = "✓ find route\n"
 const MsgReqGood = "\n✓ request valid\n"
 const MsgResGood = "✓ response valid\n\n"
 
-func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req *http.Request) (*openapi3filter.RequestValidationInput, error) {
+func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req *http.Request, bearer string) (*openapi3filter.RequestValidationInput, error) {
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("Authorization", bearer)
 	route, pathParams, err := router.FindRoute(req)
 	if err != nil {
 		return nil, fmt.Errorf("find route: %w", err)
