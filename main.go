@@ -9,6 +9,8 @@ import (
 	"github.com/kijimaD/oav/oa"
 )
 
+// show all routes
+// go run . openapi.yml
 func main() {
 	var schemaPath string
 	if len(os.Args) < 1 {

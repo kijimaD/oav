@@ -37,7 +37,7 @@ func New(out io.Writer, schema bytes.Buffer, url url.URL) *CLI {
 	}
 }
 
-func (cli *CLI) Run(path string, method string, body string, token string) error {
+func (cli *CLI) Run(path string, method string, body string, token string, status int) error {
 	ctx := context.Background()
 
 	doc, err := openapi3.NewLoader().LoadFromData(cli.Schema.Bytes())
@@ -55,7 +55,7 @@ func (cli *CLI) Run(path string, method string, body string, token string) error
 		return fmt.Errorf("new router: %w", err)
 	}
 
-	err = cli.validatePath(ctx, path, router, method, body, token)
+	err = cli.validatePath(ctx, path, router, method, body, token, status)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (cli *CLI) Run(path string, method string, body string, token string) error
 
 const separator = "────────────────────────────────────"
 
-func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string, token string) error {
+func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Router, method string, body string, token string, status int) error {
 	fmt.Fprintf(cli.Out, "%s\n%s\n\n", separator, path)
 
 	req, err := http.NewRequest(method, cli.BaseURL.String()+path, strings.NewReader(body))
@@ -76,7 +76,7 @@ func (cli *CLI) validatePath(ctx context.Context, path string, router routers.Ro
 	if err != nil {
 		return err
 	}
-	if err := cli.doRequest(ctx, req, reqInput); err != nil {
+	if err := cli.doRequest(ctx, req, reqInput, status); err != nil {
 		return err
 	}
 
@@ -120,12 +120,16 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 	return reqInput, nil
 }
 
-func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *openapi3filter.RequestValidationInput) error {
+func (cli *CLI) doRequest(ctx context.Context, req *http.Request, reqInput *openapi3filter.RequestValidationInput, status int) error {
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer response.Body.Close()
+
+	if status != response.StatusCode {
+		return fmt.Errorf("not expected status code. actual: %d\n", response.StatusCode)
+	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {

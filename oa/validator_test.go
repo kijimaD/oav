@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileValid)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/pets", "GET", "{}", "")
+	err := cli.Run("/pets", "GET", "{}", "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 	}
@@ -58,7 +58,7 @@ func TestValidate(t *testing.T) {
 	// ================
 
 	outbuf = bytes.Buffer{}
-	err = cli.Run("/fishs", "GET", "{}", "")
+	err = cli.Run("/fishs", "GET", "{}", "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 	}
@@ -81,7 +81,7 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileValid)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/not_exists", "GET", "{}", "")
+	err := cli.Run("/not_exists", "GET", "{}", "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 		got := outbuf.String()
@@ -89,7 +89,26 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	} else {
 		t.Errorf("expected: error, actual: no error")
 	}
+}
 
+func TestValidateRouteStatusMatch(t *testing.T) {
+	ts := testServer(t)
+	defer ts.Close()
+
+	// need to fix server address
+	outbuf := bytes.Buffer{}
+	url, _ := url.Parse(basePath)
+	inbuf := bytes.NewBufferString(schemafileValid)
+
+	cli := New(&outbuf, *inbuf, *url)
+	err := cli.Run("/pets", "GET", "{}", "", 999)
+	if err != nil {
+		fmt.Fprint(&outbuf, err)
+		got := outbuf.String()
+		assert.Contains(t, got, "not expected status")
+	} else {
+		t.Errorf("expected: error, actual: no error")
+	}
 }
 
 func TestValidateRouteInvalidResponse(t *testing.T) {
@@ -102,7 +121,7 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileNotMatch)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/pets", "GET", "{}", "")
+	err := cli.Run("/pets", "GET", "{}", "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 		got := outbuf.String()

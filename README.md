@@ -31,23 +31,21 @@ func TestSchema() {}
 		panic(err)
 	}
 
-	baseURL, err := url.Parse("http://localhost:8080")
+	baseURL, err := url.Parse("http://localhost:8080") # serversに登録されているホスト名である必要がある
 	if err != nil {
 		panic(err)
 	}
 
 	c := oa.New(os.Stdout, file, *baseURL)
-	err = c.Run("/pets")
+	err = c.Run("/pets", "GET", "{}", "", 200)
 	if err != nil {
 		log.Fatalf("!! %+v", err)
 	}
-	err = c.Run("/users")
+	err = c.Run("/users", "GET", "{}", "", 200)
 	if err != nil {
 		log.Fatalf("!! %+v", err)
 	}
 ```
-
-- チェックするのはserversに登録されているアドレスである必要がある。
 
 ## command
 
