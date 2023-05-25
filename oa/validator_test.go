@@ -2,6 +2,7 @@ package oa
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -39,7 +40,8 @@ func TestValidate(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileValid)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/pets", "GET", "{}", "", 200)
+	m, _ := json.Marshal(struct{ A string }{A: "a"})
+	err := cli.Run("/pets", "GET", bytes.NewReader(m), "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 	}
@@ -58,7 +60,7 @@ func TestValidate(t *testing.T) {
 	// ================
 
 	outbuf = bytes.Buffer{}
-	err = cli.Run("/fishs", "GET", "{}", "", 200)
+	err = cli.Run("/fishs", "GET", bytes.NewReader(m), "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 	}
@@ -81,7 +83,8 @@ func TestValidateRouteNotMatch(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileValid)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/not_exists", "GET", "{}", "", 200)
+	m, _ := json.Marshal(struct{ A string }{A: "a"})
+	err := cli.Run("/not_exists", "GET", bytes.NewReader(m), "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 		got := outbuf.String()
@@ -101,7 +104,8 @@ func TestValidateRouteStatusMatch(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileValid)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/pets", "GET", "{}", "", 999)
+	m, _ := json.Marshal(struct{ A string }{A: "a"})
+	err := cli.Run("/pets", "GET", bytes.NewReader(m), "", 999)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 		got := outbuf.String()
@@ -121,7 +125,8 @@ func TestValidateRouteInvalidResponse(t *testing.T) {
 	inbuf := bytes.NewBufferString(schemafileNotMatch)
 
 	cli := New(&outbuf, *inbuf, *url)
-	err := cli.Run("/pets", "GET", "{}", "", 200)
+	m, _ := json.Marshal(struct{ A string }{A: "a"})
+	err := cli.Run("/pets", "GET", bytes.NewReader(m), "", 200)
 	if err != nil {
 		fmt.Fprint(&outbuf, err)
 		got := outbuf.String()
