@@ -19,10 +19,7 @@ RUN GO111MODULE=on CGO_ENABLED=0 go build \
 # release #
 ###########
 
-FROM golang:1.19-buster AS release
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    git
+FROM gcr.io/distroless/static-debian11:latest AS release
 
 COPY --from=builder /build/bin/oav /bin/
 WORKDIR /workdir
