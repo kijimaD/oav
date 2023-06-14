@@ -102,7 +102,9 @@ func (cli *CLI) validateRequest(ctx context.Context, router routers.Router, req 
 		PathParams:  pathParams,
 		QueryParams: req.URL.Query(),
 		Route:       route,
-		// Options: nil, // ?
+		Options: &openapi3filter.Options{
+			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
+		},
 		// ParamDecoder: nil, // ?
 	}
 
